@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta http-equiv="x-ua-compatible" content="ie=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Converting .org file links to .html links when compiling Org</title>
+        <title>Hakyll - Converting file links to .html links when compiling</title>
         <link rel="stylesheet" href="../css/default.css" />
     </head>
     <body>
@@ -23,7 +23,7 @@
         </header>
 
         <main role="main">
-            <h1>Converting .org file links to .html links when compiling Org</h1>
+            <h1>Hakyll - Converting file links to .html links when compiling</h1>
             <article>
     <section class="header">
         Posted on March 14, 2021
@@ -40,25 +40,30 @@
 <p>In order to accomplish this, I had to add a transform to the Pandoc compiler in my site.hs.</p>
 <p><a href="https://github.com/jrciii/site-generator/blob/f30dfb36fff252666bb2beca35164dbe47afa71a/site.hs#L77-L89">Here is the code for the compiler with the transform added</a></p>
 <p><a href="https://github.com/jrciii/site-generator/blob/c414c069a11e25f2f3b6a0004beb6b8f7cc0597c/site.hs#L29">Here is where the compiler is used on the knowledge base</a></p>
-<p>This compiler is also used in other places in site.hs, namely where blog posts are compiled. When writing the previous blog post, I linked to this blog post as an org file, then followed it to create this post. The compiler turns it into an .html link.</p>
-<p>Here’s how the compiler works</p>
+<p>This compiler is also used in other places in site.hs, namely where blog posts are compiled. When writing the previous blog post, <a href="https://github.com/jrciii/site-generator/blame/master/posts/2021-03-14-makingjrciiicom.org#L38">I linked to this blog post as an org file, then followed it to create this post.</a> The compiler turns it into an .html link.</p>
+<h1 id="how-the-compiler-works">How the compiler works</h1>
 <p>It’s fairly simple. Even being extremely out of practice with Haskell, I was able to whip this up.</p>
-<p>Create the compiler with pandocCompilerWithTransform with some default options and a Pandoc -&gt; Pandoc function.</p>
+<h2 id="create-the-compiler-with-pandoccompilerwithtransform">Create the compiler with pandocCompilerWithTransform</h2>
+<p>Supply some default options and a Pandoc -&gt; Pandoc function.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="ot">pandocPostCompiler ::</span> <span class="dt">Compiler</span> (<span class="dt">Item</span> <span class="dt">String</span>)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>pandocPostCompiler <span class="ot">=</span> pandocCompilerWithTransform</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>    defaultHakyllReaderOptions</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>    defaultHakyllWriterOptions</span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>    orgToHtml</span></code></pre></div>
+<h2 id="walk-the-pandoc-ast">Walk the Pandoc AST</h2>
 <p>To parse the AST (Abstract Syntax Tree) or the initial compiler results, the `walk` function is used. This allows us to follow the structure until Links are found and modify the text directly.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="ot">orgToHtml ::</span> <span class="dt">Pandoc</span> <span class="ot">-&gt;</span> <span class="dt">Pandoc</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>orgToHtml <span class="ot">=</span> walk <span class="op">$</span> \inline <span class="ot">-&gt;</span> <span class="kw">case</span> inline <span class="kw">of</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>  <span class="dt">Link</span> attr inline (url, title) <span class="ot">-&gt;</span> <span class="dt">Link</span> attr inline (<span class="fu">pack</span>(orgRegex (unpack url)), title)</span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>  _ <span class="ot">-&gt;</span> inline</span></code></pre></div>
+<h2 id="apply-the-substitution-on-link-targets">Apply the substitution on link targets</h2>
 <p>This is the substitution code. It’s matching on any string that ends with .org and capturing what comes before .org, and then replacing it with that capture group with .html appended.</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="ot">orgRegex ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">String</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>orgRegex t <span class="ot">=</span> subRegex (mkRegex <span class="st">&quot;^(.*?)\\.org$&quot;</span>) t <span class="st">&quot;\\1.html&quot;</span></span></code></pre></div>
+<h1 id="done">Done!</h1>
 <p>I have a feeling I am going to be doing more things like this as the site and my Org knowledge expand, but I think I will be ready!</p>
-<p>Credits: <a href="https://enter-haken.github.io/posts/2017-02-20-pandoc-filter.html">I modeled my approach after this post</a></p>
+<h1 id="credits">Credits</h1>
+<p><a href="https://enter-haken.github.io/posts/2017-02-20-pandoc-filter.html">I modeled my approach after this post</a></p>
     </section>
 </article>
 
