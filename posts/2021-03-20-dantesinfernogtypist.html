@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>GTypist + Project Gutenberg":" Practice typing while reading classic literature</title>
+        <link rel="stylesheet" href="../css/default.css" />
+    </head>
+    <body>
+        <header>
+            <div class="logo">
+                <a href="../">jrciii's Site</a>
+            </div>
+            <nav>
+                <a href="../">Home</a>
+                <a href="../posts.html">Posts</a>
+		<a href="../knowledge">Knowledge</a>
+		<a href="../ticklers.html">Ticklers</a>
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+            </nav>
+        </header>
+
+        <main role="main">
+            <h1>GTypist + Project Gutenberg":" Practice typing while reading classic literature</h1>
+            <article>
+    <section class="header">
+        Posted on March 20, 2021
+        
+    </section>
+    <section>
+        <h1 id="ive-recently-gotten-into-mechanical-keyboards-and-typing.">I’ve recently gotten into mechanical keyboards and typing.</h1>
+<p>I feel like this should have happened before. I’ve put in an enormous amount of time on keyboards. And always on budget crap. I could touch type using my own style but I wasn’t particularly fast. Now within a week of practicing using <a href="https://www.gnu.org/software/gtypist/">GNU Typist</a> on a <a href="https://hhkeyboard.us/happyhacking/pro-classic/">Happy Hacking Keyboard</a>, I regularly get up to 70 wpm and average around 50, with proper form. It feels good being “adequate.”</p>
+<h1 id="but-now-im-running-out-of-gnu-typist-drills">But now I’m running out of GNU Typist drills!</h1>
+<p>Some of the lessons in gtypist are a real hoot. I’ve been copying old-timey correspondence about purchasing ancient computers and floppy disks, and even one about happening upon an old man who has been beaten possibly to death. And once you get hooked to these stories, it’s all over! So I had an idea. I would take classic literature from <a href="http://gutenberg.org">Project Gutenberg</a> and convert them into gtypist lessons so that I can both read and practice typing.</p>
+<h1 id="how-to-convert-a-book-into-a-typing-lesson">How to convert a book into a typing lesson</h1>
+<h2 id="download-the-book-the-divine-comedy-in-this-case">Download the book (The Divine Comedy in this case)</h2>
+<pre class="shell"><code>wget https://www.gutenberg.org/cache/epub/1001/pg1001.txt -o divinecomedy.txt
+</code></pre>
+<h2 id="trim-the-headers-and-footers">Trim the headers and footers</h2>
+<p>Don’t have anything special for this. I edited in emacs to trim down past the table of contents and remove the footer.</p>
+<h2 id="make-a-.ktouch-file-with-each-paragraph-a-lesson">Make a .ktouch file with each paragraph a lesson</h2>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="im">from</span> itertools <span class="im">import</span> groupby</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>f <span class="op">=</span> <span class="bu">open</span>(<span class="st">&quot;divinecomedy.txt&quot;</span>, <span class="st">&quot;r&quot;</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>o <span class="op">=</span> <span class="bu">open</span>(<span class="st">&quot;divinecomedy.ktouch&quot;</span>,<span class="st">&quot;w&quot;</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>i <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>o.write(<span class="st">&quot;Paragraph &quot;</span> <span class="op">+</span> <span class="bu">str</span>(i) <span class="op">+</span> <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a><span class="cf">for</span> line <span class="kw">in</span> f:</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>  <span class="cf">if</span> line <span class="op">==</span> <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>:</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a>    i <span class="op">=</span> i <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a>    o.write(<span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>    o.write(<span class="st">&quot;Paragraph &quot;</span> <span class="op">+</span> <span class="bu">str</span>(i) <span class="op">+</span> <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a>  <span class="cf">else</span>:</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a>    o.write(line)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true"></a><span class="cf">return</span> <span class="bu">open</span>(<span class="st">&quot;divinecomedy.ktouch&quot;</span>,<span class="st">&quot;r&quot;</span>).readlines()[<span class="dv">0</span>:<span class="dv">5</span>]</span></code></pre></div>
+<h2 id="convert-the-ktouch-lesson-to-a-gtypist-lesson">Convert the ktouch lesson to a gtypist lesson</h2>
+<pre class="shell"><code>perl -I ~/gtypist-2.9.5/tools ~/gtypist-2.9.5/tools/ktouchOLD2typ.pl divinecomedy.ktouch
+</code></pre>
+<h2 id="run-with-gtypist">Run with gtypist</h2>
+<pre class="shell"><code>gtypist divinecomedy.typ
+</code></pre>
+<h1 id="enjoy">Enjoy!</h1>
+<p>If you used the divine comedy, you now have 1728 paragraphs to type and read through.</p>
+<p>Here’s the first paragraph: <img src="https://jrciii.com/images/divinetypist.png" /></p>
+    </section>
+</article>
+
+        </main>
+	<footer>
+
+	</footer>
+    </body>
+</html>
