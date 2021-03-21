@@ -36,26 +36,42 @@
 <p>Some of the lessons in gtypist are a real hoot. I’ve been copying old-timey correspondence about purchasing ancient computers and floppy disks, and even one about happening upon an old man who has been beaten possibly to death. And once you get hooked to these stories, it’s all over! So I had an idea. I would take classic literature from <a href="http://gutenberg.org">Project Gutenberg</a> and convert them into gtypist lessons so that I can both read and practice typing at the same time.</p>
 <h1 id="how-to-convert-a-book-into-typing-drills">How to convert a book into typing drills</h1>
 <h2 id="download-the-book-the-divine-comedy-in-this-case">Download the book (The Divine Comedy in this case)</h2>
-<pre class="shell"><code>wget https://www.gutenberg.org/cache/epub/1001/pg1001.txt -o divinecomedy.txt
+<pre class="shell"><code>wget https://www.gutenberg.org/cache/epub/1001/pg1001.txt -O divinecomedy.txt
+# Clean up any weird characters
+dos2unix divinecomedy.txt
 </code></pre>
 <h2 id="trim-the-headers-and-footers">Trim the headers and footers</h2>
 <p>Don’t have anything special for this. I edited in emacs to trim down past the table of contents and remove the footer.</p>
 <h2 id="make-a-.ktouch-file-with-each-paragraph-a-lesson">Make a .ktouch file with each paragraph a lesson</h2>
 <p>Here’s some python code to split the paragraphs into lessons. It’s looking for blank lines and inserting the paragraph number as the lesson name so you can bookmark your progress easily.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="im">from</span> itertools <span class="im">import</span> groupby</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>f <span class="op">=</span> <span class="bu">open</span>(<span class="st">&quot;divinecomedy.txt&quot;</span>, <span class="st">&quot;r&quot;</span>)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>o <span class="op">=</span> <span class="bu">open</span>(<span class="st">&quot;divinecomedy.ktouch&quot;</span>, <span class="st">&quot;w&quot;</span>)</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>i <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>o.write(<span class="st">&quot;Paragraph &quot;</span> <span class="op">+</span> <span class="bu">str</span>(i) <span class="op">+</span> <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a><span class="cf">for</span> line <span class="kw">in</span> f:</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>  <span class="cf">if</span> line <span class="op">==</span> <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>:</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a>    i <span class="op">=</span> i <span class="op">+</span> <span class="dv">1</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a>    o.write(<span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>    o.write(<span class="st">&quot;Paragraph &quot;</span> <span class="op">+</span> <span class="bu">str</span>(i) <span class="op">+</span> <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a>  <span class="cf">else</span>:</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a>    o.write(line)</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true"></a></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true"></a><span class="cf">return</span> <span class="bu">open</span>(<span class="st">&quot;divinecomedy.ktouch&quot;</span>,<span class="st">&quot;r&quot;</span>).readlines()[<span class="dv">0</span>:<span class="dv">5</span>]</span></code></pre></div>
+<div class="sourceCode" id="cb2" data-exports="both"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a>f <span class="op">=</span> <span class="bu">open</span>(<span class="st">&quot;divinecomedy.txt&quot;</span>, <span class="st">&quot;r&quot;</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>o <span class="op">=</span> <span class="bu">open</span>(<span class="st">&quot;divinecomedy.ktouch&quot;</span>, <span class="st">&quot;w&quot;</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>i <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>o.write(<span class="st">&quot;Paragraph &quot;</span> <span class="op">+</span> <span class="bu">str</span>(i) <span class="op">+</span> <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a><span class="cf">for</span> line <span class="kw">in</span> f:</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>  <span class="cf">if</span> line <span class="op">==</span> <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>:</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>    i <span class="op">=</span> i <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a>    o.write(<span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a>    o.write(<span class="st">&quot;Paragraph &quot;</span> <span class="op">+</span> <span class="bu">str</span>(i) <span class="op">+</span> <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>  <span class="cf">else</span>:</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a>    o.write(line)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true"></a><span class="co"># Sample output</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true"></a><span class="cf">return</span> <span class="bu">open</span>(<span class="st">&quot;divinecomedy.ktouch&quot;</span>,<span class="st">&quot;r&quot;</span>).readlines()[<span class="dv">0</span>:<span class="dv">8</span>]</span></code></pre></div>
+<table>
+<tbody>
+<tr class="odd">
+<td>Paragraph 0</td>
+<td>Inferno: Canto I</td>
+<td></td>
+<td>Paragraph 1</td>
+<td>Midway upon the journey of our life</td>
+<td>I found myself within a forest dark,</td>
+<td>For the straightforward pathway had been lost.</td>
+<td></td>
+</tr>
+</tbody>
+</table>
 <h2 id="convert-the-ktouch-lesson-to-a-gtypist-lesson">Convert the ktouch lesson to a gtypist lesson</h2>
 <p>To do this you’ll need the tools that come with gtypist. <a href="https://ftp.gnu.org/gnu/gtypist/gtypist-2.9.5.tar.xz">I downloaded this file to get them.</a></p>
 <pre class="shell"><code>perl -I ~/gtypist-2.9.5/tools ~/gtypist-2.9.5/tools/ktouchOLD2typ.pl divinecomedy.ktouch
