@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Downloading the New Revised Standard Version Catholic Edition Bible</title>
+        <link rel="stylesheet" href="../css/default.css" />
+    </head>
+    <body>
+        <header>
+            <div class="logo">
+                <a href="../">jrciii's Site</a>
+            </div>
+            <nav>
+                <a href="../">Home</a>
+                <a href="../posts.html">Posts</a>
+		<a href="../knowledge">Knowledge</a>
+		<a href="../ticklers.html">Ticklers</a>
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+            </nav>
+        </header>
+
+        <main role="main">
+            <h1>Downloading the New Revised Standard Version Catholic Edition Bible</h1>
+            <article>
+    <section class="header">
+        Posted on March 23, 2021
+        
+    </section>
+    <section>
+        <p>If you want a text file of a United States Conference of Catholic Bishops <a href="https://www.usccb.org/offices/new-american-bible/approved-translations-bible">approved translation of the bible</a>, you’re going to need to scrape a website that allows you to read one. This is a bit of a copyright gray-area, so make sure you are using this for research purposes and not distributing copies.</p>
+<p>Note that the steps in this post are for creating a monolithic version without navigation, intended to be read from beginning to end. Maybe even in one sitting if you’re feeling up to it! Feel free to copy and modify this code to fit your formatting needs.</p>
+<h1 id="download-the-html-files">Download the HTML files</h1>
+<p>I used <a href="https://biblegateway.com">https://biblegateway.com</a>. This step gets all the passage URLs (1328 of them in this edition) and then downloads them.</p>
+<pre class="shell"><code>wget https://www.biblegateway.com/versions/New-Revised-Standard-Version-Catholic-Edition-NRSVCE-Bible/#booklist -O booklist
+# Replace -P 4 with however many cores you want to use.
+# Or remove for single-threade mode
+grep -Po &quot;(/passage/.*?NRSVCE)&quot; ../gatewaylist | sed 's/amp;//g' | awk '{print &quot;\&quot;wget '\''https://biblegateway.com&quot; $1 &quot;'\'' -O &quot; NR &quot;.html\&quot;&quot;}' | xargs -n 1 -P 4 -I @ sh -c &quot;@&quot;
+</code></pre>
+<h1 id="extract-the-relevant-section">Extract the relevant section</h1>
+<p>I’m using Python and <a href="https://www.crummy.com/software/BeautifulSoup/">BeautifulSoup</a> for this.</p>
+<h2 id="create-a-script-that-reads-html-and-keeps-only-the-passage-title-and-section.">Create a script that reads HTML and keeps only the passage title and section.</h2>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="im">from</span> bs4 <span class="im">import</span> BeautifulSoup</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="im">from</span> sys <span class="im">import</span> argv</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a><span class="cf">with</span> <span class="bu">open</span>(argv[<span class="dv">1</span>]) <span class="im">as</span> f:</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>    soup <span class="op">=</span> BeautifulSoup(f, <span class="st">'html.parser'</span>)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>    <span class="bu">print</span>(<span class="st">'&lt;b&gt;'</span> <span class="op">+</span> soup.body.find(<span class="st">'div'</span>, attrs<span class="op">=</span>{<span class="st">'class'</span>:<span class="st">'dropdown-display-text'</span>}).text <span class="op">+</span> <span class="st">'&lt;/b&gt;'</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>    <span class="bu">print</span>(soup.body.find(<span class="st">'div'</span>, attrs<span class="op">=</span>{<span class="st">'class'</span>:<span class="st">'version-NRSVCE result-text-style-normal text-html'</span>}).decode_contents())</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a>    <span class="bu">print</span>(<span class="st">&quot;&quot;</span>)</span></code></pre></div>
+<h1 id="create-the-monolith">Create the monolith</h1>
+<h2 id="run-the-script-on-all-files-and-concatenate">Run the script on all files and concatenate</h2>
+<pre class="shell"><code># Don't use -P on xargs here, it will be out of order
+ls | grep html | sort -n | xargs -n 1 -I @ python ../gateway_extract.py @ &gt; ~/nrsvce_bible.html
+</code></pre>
+<h2 id="optionally-clean-up-some-characters">Optionally clean up some characters</h2>
+<p>I intend to use speed-type on passages, so I am removing some characters like smart quotes and long dashes.</p>
+<pre class="shell"><code>sed -i'.bk' s/[”“]/'&quot;'/g nrsvce_bible.html 
+sed -i'.bk' s/[—]/'--'/g nrsvce_bible.html
+</code></pre>
+<h1 id="enjoy">Enjoy!</h1>
+<p>Here’s an image of the result (blurred to avoid copyright issues) <img src="https://jrciii.com/images/blurred_bible.png" /></p>
+<p>I intend to speed read and practice speed typing using the <strong>spray-mode</strong> and <strong>speed-type</strong> Emacs packages, respectively. I loaded the file with <strong>eww-open-file</strong>, and saved a plain text version with no links to the footnotes. I couldn’t figure out how to keep a bookmark of my current cursor position in a rendered html buffer using the built-in bookmark functionality (or with bookmark+).</p>
+<h2 id="relevant-bookmark-shortcuts">Relevant bookmark shortcuts</h2>
+<ul>
+<li>C-x r m (reMember bookmark)</li>
+<li>C-x r l (List bookmarks)</li>
+<li>C-x r b (jump to Bookmark)</li>
+</ul>
+<h2 id="useful-navigation-shortcuts">Useful navigation shortcuts</h2>
+<ul>
+<li>C-SPC - set mark</li>
+<li>M-} - move to end of next paragraph</li>
+<li>M-{ - move to beginning of previous paragraph</li>
+<li>M-x speed-type-region - Enter speed-type mode for region (use previous shortcuts to select paragraphs)</li>
+<li>M-x spray-mode - Enter speed reading mode</li>
+</ul>
+    </section>
+</article>
+
+        </main>
+	<footer>
+
+	</footer>
+    </body>
+</html>
