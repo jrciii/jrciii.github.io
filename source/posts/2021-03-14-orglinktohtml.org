@@ -1,0 +1,78 @@
+#+TITLE: Hakyll - Converting file links to .html links when compiling
+#+DATE: 2021-03-14
+
+In the knowledge base I am creating (a collection of articles and
+thoughts that have helped me) I have links to other Org files to avoid
+clutter and keep these pages loading fast. Suppose we have the
+following link in an Org file
+
+#+BEGIN_SRC org
+,* [​[file​:Python.org][Python]]
+#+END_SRC
+
+By default when this is compiled by Pandoc to html, it will remain as
+a link to the org file.
+
+#+BEGIN_SRC html
+<a href="Python.org">Python</a>
+#+END_SRC
+
+Which is not what I want.
+
+But how do we modify "href" targets without modifying anything else?
+For example I want the following text: dontmodifyme.org to remain as
+such, not to be dontmodifyme.html, since it isn't inside an Org link.
+
+In order to accomplish this, I had to add a transform to the
+Pandoc compiler in my site.hs.
+
+[[https://github.com/jrciii/site-generator/blob/f30dfb36fff252666bb2beca35164dbe47afa71a/site.hs#L77-L89][Here is the code for the compiler with the transform added]]
+
+[[https://github.com/jrciii/site-generator/blob/c414c069a11e25f2f3b6a0004beb6b8f7cc0597c/site.hs#L29][Here is where the compiler is used on the knowledge base]]
+
+This compiler is also used in other places in site.hs, namely where blog posts
+are compiled. When writing the previous blog post,
+[[https://github.com/jrciii/site-generator/blame/master/posts/2021-03-14-makingjrciiicom.org#L38][I linked to this blog post as an org file, then followed it to create
+this post.]] The compiler turns it into an .html link.
+
+* How the compiler works
+
+It's fairly simple. Even being extremely out of practice with Haskell,
+I was able to whip this up.
+
+** Create the compiler with pandocCompilerWithTransform
+Supply some default options and a Pandoc -> Pandoc function.
+#+BEGIN_SRC haskell
+pandocPostCompiler :: Compiler (Item String)
+pandocPostCompiler = pandocCompilerWithTransform
+    defaultHakyllReaderOptions
+    defaultHakyllWriterOptions
+    orgToHtml
+#+END_SRC
+
+** Walk the Pandoc AST
+To parse the AST (Abstract Syntax Tree) or the initial compiler
+results, the `walk` function is used. This allows us to follow the
+structure until Links are found and modify the text directly.
+#+BEGIN_SRC haskell
+orgToHtml :: Pandoc -> Pandoc
+orgToHtml = walk $ \inline -> case inline of
+  Link attr inline (url, title) -> Link attr inline (pack(orgRegex (unpack url)), title)
+  _ -> inline
+#+END_SRC
+
+** Apply the substitution on link targets
+This is the substitution code. It's matching on any string that ends
+with .org and capturing what comes before .org, and then replacing it
+with that capture group with .html appended.
+#+BEGIN_SRC haskell
+orgRegex :: String -> String
+orgRegex t = subRegex (mkRegex "^(.*?)\\.org$") t "\\1.html"
+#+END_SRC
+
+* Done!
+I have a feeling I am going to be doing more things like this as the
+site and my Org knowledge expand, but I think I will be ready!
+
+* Credits
+[[https://enter-haken.github.io/posts/2017-02-20-pandoc-filter.html][I modeled my approach after this post]]

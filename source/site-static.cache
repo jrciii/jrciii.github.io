@@ -1,0 +1,3 @@
+(setq org-publish-cache (make-hash-table :test 'equal :weakness nil :size 100))
+(puthash ":project:" "site-static" org-publish-cache)
+(puthash ":cache-file:" "/home/chimp/jrciii.github.io/source/site-static.cache" org-publish-cache)

@@ -1,0 +1,6 @@
+#+TITLE: Productivity
+
+* Emacs
+* Org-mode
+* Syncthing
+* Orgzly

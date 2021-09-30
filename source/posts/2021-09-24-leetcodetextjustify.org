@@ -1,0 +1,226 @@
+#+TITLE: A Racket Solution For LeetCode Problem #68 Text Justification
+#+DATE: 2021-09-24
+
+* Intro
+  Ever since I started using Emacs, I've been going deeper into the rabbit-hole of Lisp.
+  As luck would have it, LeetCode has a Racket environment.
+  
+  I'm trying out [[https://github.com/hasu/emacs-ob-racket][emacs-ob-racket]] for this post. Not having a great time.
+
+  I can't put #lang and (require) in the code when I execute it since the block is not run at the top level.
+  I evaluated the code block and then put #lang and require back for the export.
+  Then everything indents one more level every time I hit Enter if I try to edit the code in the block.
+  I can avoid with <insertline> but its tedious.
+  Otherwise for the short blocks at the end of this post its pretty nice being able to run the code
+  and capture the output here.
+
+  Here's a solution I came up with for [[https://leetcode.com/problems/text-justification/][LeetCode Problem #68: Text Justification.]]
+  It is a recursive solution that uses pattern matching.
+  I really like Racket's "..." and "..k" constructs in patterns,
+  which mean "zero or more" and "k or more", respectively.
+  They are greedy, too, which aligns with this problem.
+  I haven't seen this kind of expressiveness in other languages, and it made this problem easy to solve.
+  I'll write more about these at the end of this post.
+
+* The Code
+  #+BEGIN_SRC racket :results output :exports both :lang racket :require racket/match
+#lang racket
+(require racket/match)
+
+(define (full-justify words maxWidth)
+  (justify words maxWidth))
+
+(define (pad words maxWidth)
+  (let ((spaces (- maxWidth (foldl + 0 (map string-length words)))))
+    (cond
+     [(null? words) null]
+     [(= 1 (length words)) 
+      (string-append 
+       (car words) 
+       (make-string (- maxWidth (string-length (car words))) #\space))]
+     [else
+      (let*-values (((words-to-pad) (length (cdr words)))
+		    ((lspace-len) (quotient spaces words-to-pad))
+		    ((lspace) (make-string lspace-len #\space))
+		    ((bspace-len) (ceiling (/ spaces words-to-pad)))
+		    ((bspace) (make-string bspace-len #\space))
+		    ((btimes) (- spaces (* words-to-pad lspace-len)))
+		    ((bw lw) (split-at words (add1 btimes))))
+	(string-append
+	 (string-join bw bspace)
+	 (if (null? lw) "" (string-join lw lspace #:before-first lspace))))])))
+
+(define (pad-last words maxWidth)
+  (let ((trail-space (- maxWidth (+ (sub1 (length words)) (foldl + 0 (map string-length words))))))
+    (string-join words " " #:after-last (make-string trail-space #\space))))
+
+(define (justify words maxWidth)
+  (match words
+    ['() '("")]
+    [(list a ..1 b ...)
+     #:when (<= (+ (sub1 (length a)) (foldl + 0 (map string-length a))) maxWidth)
+     (cons
+      (if (null? b)
+	  (pad-last a maxWidth)
+	  (pad a maxWidth))
+      (justify b maxWidth))]))
+
+(display 
+ (string-join 
+  (full-justify 
+   '["ask" "not" "what" "your" "country" "can" "do" "for" "you" 
+     "ask" "what" "you" "can" "do" "for" "your" "country"] 16) "\n"))
+  #+END_SRC
+
+  #+RESULTS:
+  : ask   not   what
+  : your country can
+  : do  for  you ask
+  : what  you can do
+  : for your country
+  
+* Explanation
+** Quick Rundown
+   The high level approach is:
+   1. Group the words in a way that each group has at most "maxWidth" characters.
+      - If there's more than one word in a group, then at least one space will be added between each word,
+	which must be accounted for in making sure words fit in groups.
+   2. Per group, determine how many characters are in a "lesser" space and how many characters are in a "bigger" space.
+   3. Determine how many "bigger" and "lesser" spaces there need to be.
+      One word groups and the last group get left justified.
+   4. Add the spaces between words in each group.
+** Grouping The Words
+   This is the most interesting part of this exercise, I think.
+*** Termination Condition  
+    The first pattern is the termination condition.
+    #+BEGIN_SRC racket :exports both :lang racket :require racket/match
+    ['() '("")]
+    #+END_SRC
+    If an empty list is encountered just return a group with an empty string.
+*** Grouping Words and Recursion    
+    The last pattern separates the next group to pad from the remaining words to group.
+    #+BEGIN_SRC racket :exports both :lang racket :require racket/match
+    (list a ..1 b ...)
+    #+END_SRC
+    When matched, this means there is at least one word with maybe some words following it.
+    Without a `when` clause you will end up with all words in `a` and no words in `b`
+    due to the greedy nature of the ellipsis. Here are some similar patterns that demonstrate the greediness better.
+    #+BEGIN_SRC racket :exports both :lang racket :require racket/match
+    (match '(a b c d e f g h) [(list a ..1 b ... c ...) (list a b c)])
+    #+END_SRC
+
+    #+RESULTS:
+    : ((a b c d e f g h) () ())
+    
+    #+BEGIN_SRC racket :exports both :lang racket :require racket/match
+    (match '(a b c d e f g h) [(list a ..1 b ... c ..1) (list a b c)])
+    #+END_SRC
+
+    #+RESULTS:
+    : ((a b c d e f g) () (h))
+
+    #+BEGIN_SRC racket :exports both :lang racket :require racket/match
+    (match '(a b c d e f g h) [(list a ..1 b ..1 c ..1) (list a b c)])
+    #+END_SRC
+
+    #+RESULTS:
+    : ((a b c d e f) (g) (h))
+
+    As you can see the first group gobbled up as much as it could!
+    Now we can tame the `a` group with a #:when argument.
+
+    #+BEGIN_SRC racket :exports both :lang racket :require racket/match
+    (match '(a b c d e f g h)
+      [(list a ..1 b ... c ..1)
+       #:when (= 3 (length a))
+       (list a b c)])
+    #+END_SRC
+
+    #+RESULTS:
+    : ((a b c) (d e f g) (h))
+
+    But now `b` feasts! What a greedy little list!
+
+    Now getting back to the pattern in the code.
+
+    #+BEGIN_SRC racket :exports both :lang racket :require racket/match
+    [(list a ..1 b ...)
+     #:when (<= (+ (sub1 (length a)) (foldl + 0 (map string-length a))) maxWidth)
+     (cons
+      (if (null? b)
+          (pad-last a maxWidth)
+	  (pad a maxWidth))
+      (justify b maxWidth))]
+    #+END_SRC
+    This will make it so `a` only gobbles up as much as will fit in a group, and leave the rest to `b`
+
+    `a` gets padded, and prepended to the results of another call to justify on `b`. This recursion will
+    continue until the termination condition is matched.
+** Padding the Groups
+   This step is the most difficult. The difficulty lies in the fact that not all space between words
+   will be the same. But, the larger spaces will only be one space character longer,
+   so it isn't too complicated.
+   This is the simple case of adding spaces to the end of a single-word group which I will not go into
+   #+BEGIN_SRC racket :exports both :lang racket :require racket/match
+   [(= 1 (length words)) 
+    (string-append 
+     (car words) 
+     (make-string (- maxWidth (string-length (car words))) #\space))]
+   #+END_SRC
+   This is the main padding logic.
+   #+BEGIN_SRC racket :exports both :lang racket :require racket/match
+      (let*-values (((words-to-pad) (length (cdr words)))
+		    ((lspace-len) (quotient spaces words-to-pad))
+		    ((lspace) (make-string lspace-len #\space))
+		    ((bspace-len) (ceiling (/ spaces words-to-pad)))
+		    ((bspace) (make-string bspace-len #\space))
+		    ((btimes) (- spaces (* words-to-pad lspace-len)))
+		    ((bw lw) (split-at words (add1 btimes))))
+	(string-append
+	 (string-join bw bspace)
+	 (if (null? lw) "" (string-join lw lspace #:before-first lspace))))])))
+   #+END_SRC
+   These are the steps:
+   1. How many words do we have to pad? Padding in this case is prepending space before a word.
+      Only words after the first need to be padded. Hence (length (cdr words)) is used.
+   2. How many spaces for a smaller pad is the quotient of spaces needed to fill the group to meet
+      maxWidth, and words-to-pad. This might be all the pads we need. If there is any remainder in spaces,
+      the bigger spaces will take care of it.
+      So with a width of 10, and 4 words, with 5 characters, we end up with 5 spaces left.
+      ..........
+      ay..e..i.o
+      5 spaces / 3 words (quotient) is 1, the lesser pad length
+   3. Create the lesser space pad string for use later.
+   4. The bigger space length will be the ceiling of the ratio between remaining spaces and words to pad.
+      Now that I think of it, I'm pretty sure this will always be one space larger and
+      can just be (add1 lspace-len) but I don't feel like running
+      it through all the tests again on LeetCode. An exercise for the reader, perhaps?
+   5. Create the bigger pad for later use.
+   6. To figure out the number of big pads, see how many spaces are left after applying all lesser pads.
+      The number of spaces left means we can replace that many number of lesser pads with big pads to fill
+      up the group. Note that there might not be any big pads.
+   7. Since we will apply all big pads first, split the group in two:
+      - The first word, and then `btimes` amount of words (might be none)
+      - The rest of the words.
+   8. Join the first group together with big pads. If it's just the first word, no big pads are added.
+   9. If there are "lesser" words, join them together with lesser pads, and add a lesser pad to the front.
+   10. Combine these two strings. The group has been padded.
+* More on `...`
+  The price of convenience in this case is an inefficient program.
+  The match library achieves the greediness with the when clause in this pattern
+  #+BEGIN_SRC racket :exports both :lang racket :require racket/match
+    [(list a ..1 b ...)
+     #:when (<= (+ (sub1 (length a)) (foldl + 0 (map string-length a))) maxWidth)
+  #+END_SRC
+  by first reversing the words, checking that list against the "when" condition, and if it fails,
+  will take the tail (cdr), and try again, and keep doing this until a group of words matches. As you can
+  see this is repeating work. But, it gets the job done, and saves a lot of developer time, and
+  leads to an easy to understand solution (I think so anyway).
+* Conclusion
+  Racket is a good language. It has the elegance of Scheme, a good standard library and great documentation.
+  I have been enjoying solving LeetCode problems with it.
+
+  Unfortunately on LeetCode, no matter what, submissions will use 100 MB memory and take at least 200 m/s.
+  That looks horrible next to the C solutions, reported as 0 m/s runtime and 5 MB memory usage.
+  There appears to be some pre-allocating of memory, and JIT compilation added into the runtime for Racket.
+  And I noticed that debugging with DrRacket on my machine used 500 mb of memory!

@@ -1,88 +1,155 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="x-ua-compatible" content="ie=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Downloading the New Revised Standard Version Catholic Edition Bible</title>
-        <link rel="stylesheet" href="../css/default.css" />
-    </head>
-    <body>
-        <header>
-            <div class="logo">
-                <a href="../">jrciii's Site</a>
-            </div>
-            <nav>
-                <a href="../">Home</a>
-                <a href="../posts.html">Posts</a>
-		<a href="../knowledge">Knowledge</a>
-		<a href="../ticklers.html">Ticklers</a>
-                <a href="../about.html">About</a>
-                <a href="../contact.html">Contact</a>
-            </nav>
-        </header>
+<head>
+<!-- 2021-09-29 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Downloading the New Revised Standard Version Catholic Edition Bible</title>
+<meta name="generator" content="Org mode">
+<link rel="stylesheet" type="text/css" href="../luxury.css">
+</head>
+<body>
+<div id="preamble" class="status">
+<a href="../index.html">Home</a>
+<a href="../posts.html">Posts</a>
+<a href="../knowledge/index.html">Knowledge</a>
+<a href="../ticklers/ticklers.html">Ticklers</a>
+<a href="../about/about.html">About</a>
+<a href="../contact/contact.html">Contact</a>
+<a href="https://github.com/jrciii/jrciii.github.io">Comments</a>
+</div>
+<div id="content">
+<header>
+<h1 class="title">Downloading the New Revised Standard Version Catholic Edition Bible</h1>
+</header><p>
+If you want a text file of a United States Conference of Catholic
+Bishops <a href="https://www.usccb.org/offices/new-american-bible/approved-translations-bible">approved translation of the bible</a>, you&rsquo;re going to need to
+scrape a website that allows you to read one. This is a bit of a
+copyright gray-area, so make sure you are using this for research
+purposes and not distributing copies.
+</p>
 
-        <main role="main">
-            <h1>Downloading the New Revised Standard Version Catholic Edition Bible</h1>
-            <article>
-    <section class="header">
-        Posted on March 23, 2021
-        
-    </section>
-    <section>
-        <p>If you want a text file of a United States Conference of Catholic Bishops <a href="https://www.usccb.org/offices/new-american-bible/approved-translations-bible">approved translation of the bible</a>, you’re going to need to scrape a website that allows you to read one. This is a bit of a copyright gray-area, so make sure you are using this for research purposes and not distributing copies.</p>
-<p>Note that the steps in this post are for creating a monolithic version without navigation, intended to be read from beginning to end. Maybe even in one sitting if you’re feeling up to it! Feel free to copy and modify this code to fit your formatting needs.</p>
-<h1 id="download-the-html-files">Download the HTML files</h1>
-<p>I used <a href="https://biblegateway.com">https://biblegateway.com</a>. This step gets all the passage URLs (1328 of them in this edition) and then downloads them.</p>
-<pre class="shell"><code>wget https://www.biblegateway.com/versions/New-Revised-Standard-Version-Catholic-Edition-NRSVCE-Bible/#booklist -O booklist
-# Replace -P 4 with however many cores you want to use.
-# Or remove for single-threade mode
-grep -Po &quot;(/passage/.*?NRSVCE)&quot; ../gatewaylist | sed 's/amp;//g' | awk '{print &quot;\&quot;wget '\''https://biblegateway.com&quot; $1 &quot;'\'' -O &quot; NR &quot;.html\&quot;&quot;}' | xargs -n 1 -P 4 -I @ sh -c &quot;@&quot;
-</code></pre>
-<h1 id="extract-the-relevant-section">Extract the relevant section</h1>
-<p>I’m using Python and <a href="https://www.crummy.com/software/BeautifulSoup/">BeautifulSoup</a> for this.</p>
-<h2 id="create-a-script-that-reads-html-and-keeps-only-the-passage-title-and-section.">Create a script that reads HTML and keeps only the passage title and section.</h2>
-<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="im">from</span> bs4 <span class="im">import</span> BeautifulSoup</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="im">from</span> sys <span class="im">import</span> argv</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a><span class="cf">with</span> <span class="bu">open</span>(argv[<span class="dv">1</span>]) <span class="im">as</span> f:</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>    soup <span class="op">=</span> BeautifulSoup(f, <span class="st">'html.parser'</span>)</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>    <span class="bu">print</span>(<span class="st">'&lt;b&gt;'</span> <span class="op">+</span> soup.body.find(<span class="st">'div'</span>, attrs<span class="op">=</span>{<span class="st">'class'</span>:<span class="st">'dropdown-display-text'</span>}).text <span class="op">+</span> <span class="st">'&lt;/b&gt;'</span>)</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>    <span class="bu">print</span>(soup.body.find(<span class="st">'div'</span>, attrs<span class="op">=</span>{<span class="st">'class'</span>:<span class="st">'version-NRSVCE result-text-style-normal text-html'</span>}).decode_contents())</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a>    <span class="bu">print</span>(<span class="st">&quot;&quot;</span>)</span></code></pre></div>
-<h1 id="create-the-monolith">Create the monolith</h1>
-<h2 id="run-the-script-on-all-files-and-concatenate">Run the script on all files and concatenate</h2>
-<pre class="shell"><code># Don't use -P on xargs here, it will be out of order
+<p>
+Note that the steps in this post are for creating a monolithic version
+without navigation, intended to be read from beginning to end. Maybe
+even in one sitting if you&rsquo;re feeling up to it! Feel free to copy and
+modify this code to fit your formatting needs.
+</p>
+
+<div id="outline-container-org2ce941e" class="outline-2">
+<h2 id="org2ce941e">Download the HTML files</h2>
+<div class="outline-text-2" id="text-org2ce941e">
+<p>
+I used <a href="https://biblegateway.com">https://biblegateway.com</a>. This step gets all the passage URLs
+(1328 of them in this edition) and then downloads them.
+</p>
+<div class="org-src-container">
+<pre class="src src-shell">wget https://www.biblegateway.com/versions/New-Revised-Standard-Version-Catholic-Edition-NRSVCE-Bible/#booklist -O booklist
+<span style="color: #cd5555;"># </span><span style="color: #cd5555;">Replace -P 4 with however many cores you want to use.</span>
+<span style="color: #cd5555;"># </span><span style="color: #cd5555;">Or remove for single-threade mode</span>
+grep -Po <span style="color: #bf7af2;">"(/passage/.*?NRSVCE)"</span> ../gatewaylist | sed <span style="color: #bf7af2;">'s/amp;//g'</span> | awk <span style="color: #bf7af2;">'{print "\"wget '\''https://biblegateway.com" $1 "'\'' -O " NR ".html\""}'</span> | xargs -n 1 -P 4 -I @ sh -c <span style="color: #bf7af2;">"@"</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org286b75d" class="outline-2">
+<h2 id="org286b75d">Extract the relevant section</h2>
+<div class="outline-text-2" id="text-org286b75d">
+<p>
+I&rsquo;m using Python and <a href="https://www.crummy.com/software/BeautifulSoup/">BeautifulSoup</a> for this.
+</p>
+</div>
+<div id="outline-container-orgf431667" class="outline-3">
+<h3 id="orgf431667">Create a script that reads HTML and keeps only the passage title and section.</h3>
+<div class="outline-text-3" id="text-orgf431667">
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #6ca6cd; font-weight: bold;">from</span> bs4 <span style="color: #6ca6cd; font-weight: bold;">import</span> BeautifulSoup
+<span style="color: #6ca6cd; font-weight: bold;">from</span> sys <span style="color: #6ca6cd; font-weight: bold;">import</span> argv
+
+<span style="color: #6ca6cd; font-weight: bold;">with</span> <span style="color: #ffd700;">open</span>(argv[1]) <span style="color: #6ca6cd; font-weight: bold;">as</span> f:
+    <span style="color: #cdad00;">soup</span> = BeautifulSoup(f, <span style="color: #bf7af2;">'html.parser'</span>)
+    <span style="color: #6ca6cd; font-weight: bold;">print</span>(<span style="color: #bf7af2;">'&lt;b&gt;'</span> + soup.body.find(<span style="color: #bf7af2;">'div'</span>, attrs={<span style="color: #bf7af2;">'class'</span>:<span style="color: #bf7af2;">'dropdown-display-text'</span>}).text + <span style="color: #bf7af2;">'&lt;/b&gt;'</span>)
+    <span style="color: #6ca6cd; font-weight: bold;">print</span>(soup.body.find(<span style="color: #bf7af2;">'div'</span>, attrs={<span style="color: #bf7af2;">'class'</span>:<span style="color: #bf7af2;">'version-NRSVCE result-text-style-normal text-html'</span>}).decode_contents())
+    <span style="color: #6ca6cd; font-weight: bold;">print</span>(<span style="color: #bf7af2;">""</span>)
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org97c426d" class="outline-2">
+<h2 id="org97c426d">Create the monolith</h2>
+<div class="outline-text-2" id="text-org97c426d">
+</div>
+<div id="outline-container-org78fb745" class="outline-3">
+<h3 id="org78fb745">Run the script on all files and concatenate</h3>
+<div class="outline-text-3" id="text-org78fb745">
+<div class="org-src-container">
+<pre class="src src-shell"><span style="color: #cd5555;"># </span><span style="color: #cd5555;">Don't use -P on xargs here, it will be out of order</span>
 ls | grep html | sort -n | xargs -n 1 -I @ python ../gateway_extract.py @ &gt; ~/nrsvce_bible.html
-</code></pre>
-<h2 id="optionally-clean-up-some-characters">Optionally clean up some characters</h2>
-<p>I intend to use speed-type on passages, so I am removing some characters like smart quotes and long dashes.</p>
-<pre class="shell"><code>sed -i'.bk' s/[”“]/'&quot;'/g nrsvce_bible.html 
-sed -i'.bk' s/[—]/'--'/g nrsvce_bible.html
-</code></pre>
-<h1 id="enjoy">Enjoy!</h1>
-<p>Here’s an image of the result (blurred to avoid copyright issues) <img src="https://jrciii.com/images/blurred_bible.png" /></p>
-<p>I intend to speed read and practice speed typing using the <strong>spray-mode</strong> and <strong>speed-type</strong> Emacs packages, respectively. I loaded the file with <strong>eww-open-file</strong>, and saved a plain text version with no links to the footnotes. I couldn’t figure out how to keep a bookmark of my current cursor position in a rendered html buffer using the built-in bookmark functionality (or with bookmark+).</p>
-<h2 id="relevant-bookmark-shortcuts">Relevant bookmark shortcuts</h2>
-<ul>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org5eb92ff" class="outline-3">
+<h3 id="org5eb92ff">Optionally clean up some characters</h3>
+<div class="outline-text-3" id="text-org5eb92ff">
+<p>
+I intend to use speed-type on passages, so I am removing some characters like smart quotes and long dashes.
+</p>
+<div class="org-src-container">
+<pre class="src src-shell">sed -i<span style="color: #bf7af2;">'.bk'</span> s/[&#8221;&#8220;]/<span style="color: #bf7af2;">'"'</span>/g nrsvce_bible.html 
+sed -i<span style="color: #bf7af2;">'.bk'</span> s/[&#8212;]/<span style="color: #bf7af2;">'--'</span>/g nrsvce_bible.html
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1fc8fe5" class="outline-2">
+<h2 id="org1fc8fe5">Enjoy!</h2>
+<div class="outline-text-2" id="text-org1fc8fe5">
+<p>
+Here&rsquo;s an image of the result (blurred to avoid copyright issues)
+<img src="https://jrciii.com/images/blurred_bible.png" alt="blurred_bible.png">
+</p>
+
+<p>
+I intend to speed read and practice speed typing using the
+<b>spray-mode</b> and <b>speed-type</b> Emacs packages, respectively. I loaded
+the file with <b>eww-open-file</b>, and saved a plain text version with no
+links to the footnotes. I couldn&rsquo;t figure out how to keep a bookmark
+of my current cursor position in a rendered html buffer using the
+built-in bookmark functionality (or with bookmark+).
+</p>
+</div>
+
+<div id="outline-container-orgf5c53e8" class="outline-3">
+<h3 id="orgf5c53e8">Relevant bookmark shortcuts</h3>
+<div class="outline-text-3" id="text-orgf5c53e8">
+<ul class="org-ul">
 <li>C-x r m (reMember bookmark)</li>
 <li>C-x r l (List bookmarks)</li>
 <li>C-x r b (jump to Bookmark)</li>
 </ul>
-<h2 id="useful-navigation-shortcuts">Useful navigation shortcuts</h2>
-<ul>
+</div>
+</div>
+
+<div id="outline-container-org4e60687" class="outline-3">
+<h3 id="org4e60687">Useful navigation shortcuts</h3>
+<div class="outline-text-3" id="text-org4e60687">
+<ul class="org-ul">
 <li>C-SPC - set mark</li>
 <li>M-} - move to end of next paragraph</li>
 <li>M-{ - move to beginning of previous paragraph</li>
 <li>M-x speed-type-region - Enter speed-type mode for region (use previous shortcuts to select paragraphs)</li>
 <li>M-x spray-mode - Enter speed reading mode</li>
 </ul>
-    </section>
-</article>
-
-        </main>
-	<footer>
-
-	</footer>
-    </body>
+</div>
+</div>
+</div>
+</div>
+</body>
 </html>

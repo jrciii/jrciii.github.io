@@ -1,0 +1,11 @@
+#+TITLE: jrciii's page
+#+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="luxury.css">
+#+HTML_HEAD_EXTRA: <link href="https://jrciii.com/" rel="canonical">
+
+My site. I'm sharing my knowledge with you the best I can through blog posts and a knowledge base of curated content.
+
+The knowledge base is a bit sparse at the moment.
+
+I am currently migrating away from Hakyll to using pure Org + Elisp to generate this site.
+
+[[https://jrciii.com/posts.html][Check out my posts.]]

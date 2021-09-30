@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2021-09-29 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A Racket Solution For LeetCode Problem #68 Text Justification</title>
+<meta name="generator" content="Org mode">
+<link rel="stylesheet" type="text/css" href="../luxury.css">
+</head>
+<body>
+<div id="preamble" class="status">
+<a href="../index.html">Home</a>
+<a href="../posts.html">Posts</a>
+<a href="../knowledge/index.html">Knowledge</a>
+<a href="../ticklers/ticklers.html">Ticklers</a>
+<a href="../about/about.html">About</a>
+<a href="../contact/contact.html">Contact</a>
+<a href="https://github.com/jrciii/jrciii.github.io">Comments</a>
+</div>
+<div id="content">
+<header>
+<h1 class="title">A Racket Solution For LeetCode Problem #68 Text Justification</h1>
+</header>
+<div id="outline-container-org3934c26" class="outline-2">
+<h2 id="org3934c26">Intro</h2>
+<div class="outline-text-2" id="text-org3934c26">
+<p>
+Ever since I started using Emacs, I&rsquo;ve been going deeper into the rabbit-hole of Lisp.
+As luck would have it, LeetCode has a Racket environment.
+</p>
+
+<p>
+I&rsquo;m trying out <a href="https://github.com/hasu/emacs-ob-racket">emacs-ob-racket</a> for this post. Not having a great time.
+</p>
+
+<p>
+I can&rsquo;t put #lang and (require) in the code when I execute it since the block is not run at the top level.
+I evaluated the code block and then put #lang and require back for the export.
+Then everything indents one more level every time I hit Enter if I try to edit the code in the block.
+I can avoid with &lt;insertline&gt; but its tedious.
+Otherwise for the short blocks at the end of this post its pretty nice being able to run the code
+and capture the output here.
+</p>
+
+<p>
+Here&rsquo;s a solution I came up with for <a href="https://leetcode.com/problems/text-justification/">LeetCode Problem #68: Text Justification.</a>
+It is a recursive solution that uses pattern matching.
+I really like Racket&rsquo;s &ldquo;&#x2026;&rdquo; and &ldquo;..k&rdquo; constructs in patterns,
+which mean &ldquo;zero or more&rdquo; and &ldquo;k or more&rdquo;, respectively.
+They are greedy, too, which aligns with this problem.
+I haven&rsquo;t seen this kind of expressiveness in other languages, and it made this problem easy to solve.
+I&rsquo;ll write more about these at the end of this post.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgfdcdbd1" class="outline-2">
+<h2 id="orgfdcdbd1">The Code</h2>
+<div class="outline-text-2" id="text-orgfdcdbd1">
+<div class="org-src-container">
+<pre class="src src-racket"><span style="color: #6ca6cd; font-weight: bold;">#lang</span> racket
+(<span style="color: #6ca6cd; font-weight: bold;">require</span> racket/match)
+
+(<span style="color: #6ca6cd; font-weight: bold;">define</span> (<span style="color: #eec900;">full-justify</span> words maxWidth)
+  (justify words maxWidth))
+
+(<span style="color: #6ca6cd; font-weight: bold;">define</span> (<span style="color: #eec900;">pad</span> words maxWidth)
+  (<span style="color: #6ca6cd; font-weight: bold;">let</span> ((spaces (- maxWidth (foldl + 0 (<span style="color: #6ca6cd; font-weight: bold;">map</span> string-length words)))))
+    (<span style="color: #6ca6cd; font-weight: bold;">cond</span>
+     [(null? words) null]
+     [(= 1 (length words)) 
+      (string-append 
+       (car words) 
+       (make-string (- maxWidth (string-length (car words))) #\space))]
+     [<span style="color: #6ca6cd; font-weight: bold;">else</span>
+      (<span style="color: #6ca6cd; font-weight: bold;">let*-values</span> (((words-to-pad) (length (cdr words)))
+                    ((lspace-len) (quotient spaces words-to-pad))
+                    ((lspace) (make-string lspace-len #\space))
+                    ((bspace-len) (ceiling (/ spaces words-to-pad)))
+                    ((bspace) (make-string bspace-len #\space))
+                    ((btimes) (- spaces (* words-to-pad lspace-len)))
+                    ((bw lw) (split-at words (add1 btimes))))
+        (string-append
+         (string-join bw bspace)
+         (<span style="color: #6ca6cd; font-weight: bold;">if</span> (null? lw) <span style="color: #bf7af2;">""</span> (string-join lw lspace <span style="color: #ffd700;">#:before-first</span> lspace))))])))
+
+(<span style="color: #6ca6cd; font-weight: bold;">define</span> (<span style="color: #eec900;">pad-last</span> words maxWidth)
+  (<span style="color: #6ca6cd; font-weight: bold;">let</span> ((trail-space (- maxWidth (+ (sub1 (length words)) (foldl + 0 (<span style="color: #6ca6cd; font-weight: bold;">map</span> string-length words))))))
+    (string-join words <span style="color: #bf7af2;">" "</span> <span style="color: #ffd700;">#:after-last</span> (make-string trail-space #\space))))
+
+(<span style="color: #6ca6cd; font-weight: bold;">define</span> (<span style="color: #eec900;">justify</span> words maxWidth)
+  (<span style="color: #6ca6cd; font-weight: bold;">match</span> words
+    ['() '(<span style="color: #bf7af2;">""</span>)]
+    [(list a ..1 b ...)
+     <span style="color: #ffd700;">#:when</span> (&lt;= (+ (sub1 (length a)) (foldl + 0 (<span style="color: #6ca6cd; font-weight: bold;">map</span> string-length a))) maxWidth)
+     (cons
+      (<span style="color: #6ca6cd; font-weight: bold;">if</span> (null? b)
+          (pad-last a maxWidth)
+          (pad a maxWidth))
+      (justify b maxWidth))]))
+
+(display 
+ (string-join 
+  (full-justify 
+   '[<span style="color: #bf7af2;">"ask"</span> <span style="color: #bf7af2;">"not"</span> <span style="color: #bf7af2;">"what"</span> <span style="color: #bf7af2;">"your"</span> <span style="color: #bf7af2;">"country"</span> <span style="color: #bf7af2;">"can"</span> <span style="color: #bf7af2;">"do"</span> <span style="color: #bf7af2;">"for"</span> <span style="color: #bf7af2;">"you"</span> 
+     <span style="color: #bf7af2;">"ask"</span> <span style="color: #bf7af2;">"what"</span> <span style="color: #bf7af2;">"you"</span> <span style="color: #bf7af2;">"can"</span> <span style="color: #bf7af2;">"do"</span> <span style="color: #bf7af2;">"for"</span> <span style="color: #bf7af2;">"your"</span> <span style="color: #bf7af2;">"country"</span>] 16) <span style="color: #bf7af2;">"\n"</span>))
+</pre>
+</div>
+
+<pre class="example">
+ask   not   what
+your country can
+do  for  you ask
+what  you can do
+for your country
+</pre>
+</div>
+</div>
+
+<div id="outline-container-orgc767937" class="outline-2">
+<h2 id="orgc767937">Explanation</h2>
+<div class="outline-text-2" id="text-orgc767937">
+</div>
+<div id="outline-container-org988f7e1" class="outline-3">
+<h3 id="org988f7e1">Quick Rundown</h3>
+<div class="outline-text-3" id="text-org988f7e1">
+<p>
+The high level approach is:
+</p>
+<ol class="org-ol">
+<li>Group the words in a way that each group has at most &ldquo;maxWidth&rdquo; characters.
+<ul class="org-ul">
+<li>If there&rsquo;s more than one word in a group, then at least one space will be added between each word,
+which must be accounted for in making sure words fit in groups.</li>
+</ul></li>
+<li>Per group, determine how many characters are in a &ldquo;lesser&rdquo; space and how many characters are in a &ldquo;bigger&rdquo; space.</li>
+<li>Determine how many &ldquo;bigger&rdquo; and &ldquo;lesser&rdquo; spaces there need to be.
+One word groups and the last group get left justified.</li>
+<li>Add the spaces between words in each group.</li>
+</ol>
+</div>
+</div>
+<div id="outline-container-orgb470b38" class="outline-3">
+<h3 id="orgb470b38">Grouping The Words</h3>
+<div class="outline-text-3" id="text-orgb470b38">
+<p>
+This is the most interesting part of this exercise, I think.
+</p>
+</div>
+<div id="outline-container-orgccdd3a5" class="outline-4">
+<h4 id="orgccdd3a5">Termination Condition</h4>
+<div class="outline-text-4" id="text-orgccdd3a5">
+<p>
+The first pattern is the termination condition.
+</p>
+<div class="org-src-container">
+<pre class="src src-racket">['() '(<span style="color: #bf7af2;">""</span>)]
+</pre>
+</div>
+<p>
+If an empty list is encountered just return a group with an empty string.
+</p>
+</div>
+</div>
+<div id="outline-container-org58020a1" class="outline-4">
+<h4 id="org58020a1">Grouping Words and Recursion</h4>
+<div class="outline-text-4" id="text-org58020a1">
+<p>
+The last pattern separates the next group to pad from the remaining words to group.
+</p>
+<div class="org-src-container">
+<pre class="src src-racket">(list a ..1 b ...)
+</pre>
+</div>
+<p>
+When matched, this means there is at least one word with maybe some words following it.
+Without a `when` clause you will end up with all words in `a` and no words in `b`
+due to the greedy nature of the ellipsis. Here are some similar patterns that demonstrate the greediness better.
+</p>
+<div class="org-src-container">
+<pre class="src src-racket">(<span style="color: #6ca6cd; font-weight: bold;">match</span> '(a b c d e f g h) [(list a ..1 b ... c ...) (list a b c)])
+</pre>
+</div>
+
+<pre class="example">
+((a b c d e f g h) () ())
+</pre>
+
+
+<div class="org-src-container">
+<pre class="src src-racket">(<span style="color: #6ca6cd; font-weight: bold;">match</span> '(a b c d e f g h) [(list a ..1 b ... c ..1) (list a b c)])
+</pre>
+</div>
+
+<pre class="example">
+((a b c d e f g) () (h))
+</pre>
+
+
+<div class="org-src-container">
+<pre class="src src-racket">(<span style="color: #6ca6cd; font-weight: bold;">match</span> '(a b c d e f g h) [(list a ..1 b ..1 c ..1) (list a b c)])
+</pre>
+</div>
+
+<pre class="example">
+((a b c d e f) (g) (h))
+</pre>
+
+
+<p>
+As you can see the first group gobbled up as much as it could!
+Now we can tame the `a` group with a #:when argument.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-racket">(<span style="color: #6ca6cd; font-weight: bold;">match</span> '(a b c d e f g h)
+  [(list a ..1 b ... c ..1)
+   <span style="color: #ffd700;">#:when</span> (= 3 (length a))
+   (list a b c)])
+</pre>
+</div>
+
+<pre class="example">
+((a b c) (d e f g) (h))
+</pre>
+
+
+<p>
+But now `b` feasts! What a greedy little list!
+</p>
+
+<p>
+Now getting back to the pattern in the code.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-racket">[(list a ..1 b ...)
+ <span style="color: #ffd700;">#:when</span> (&lt;= (+ (sub1 (length a)) (foldl + 0 (<span style="color: #6ca6cd; font-weight: bold;">map</span> string-length a))) maxWidth)
+ (cons
+  (<span style="color: #6ca6cd; font-weight: bold;">if</span> (null? b)
+      (pad-last a maxWidth)
+      (pad a maxWidth))
+  (justify b maxWidth))]
+</pre>
+</div>
+<p>
+This will make it so `a` only gobbles up as much as will fit in a group, and leave the rest to `b`
+</p>
+
+<p>
+`a` gets padded, and prepended to the results of another call to justify on `b`. This recursion will
+continue until the termination condition is matched.
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-orge443319" class="outline-3">
+<h3 id="orge443319">Padding the Groups</h3>
+<div class="outline-text-3" id="text-orge443319">
+<p>
+This step is the most difficult. The difficulty lies in the fact that not all space between words
+will be the same. But, the larger spaces will only be one space character longer,
+so it isn&rsquo;t too complicated.
+This is the simple case of adding spaces to the end of a single-word group which I will not go into
+</p>
+<div class="org-src-container">
+<pre class="src src-racket">[(= 1 (length words)) 
+ (string-append 
+  (car words) 
+  (make-string (- maxWidth (string-length (car words))) #\space))]
+</pre>
+</div>
+<p>
+This is the main padding logic.
+</p>
+<div class="org-src-container">
+<pre class="src src-racket">(<span style="color: #6ca6cd; font-weight: bold;">let*-values</span> (((words-to-pad) (length (cdr words)))
+              ((lspace-len) (quotient spaces words-to-pad))
+              ((lspace) (make-string lspace-len #\space))
+              ((bspace-len) (ceiling (/ spaces words-to-pad)))
+              ((bspace) (make-string bspace-len #\space))
+              ((btimes) (- spaces (* words-to-pad lspace-len)))
+              ((bw lw) (split-at words (add1 btimes))))
+  (string-append
+   (string-join bw bspace)
+   (<span style="color: #6ca6cd; font-weight: bold;">if</span> (null? lw) <span style="color: #bf7af2;">""</span> (string-join lw lspace <span style="color: #ffd700;">#:before-first</span> lspace))))])))
+</pre>
+</div>
+<p>
+These are the steps:
+</p>
+<ol class="org-ol">
+<li>How many words do we have to pad? Padding in this case is prepending space before a word.
+Only words after the first need to be padded. Hence (length (cdr words)) is used.</li>
+<li>How many spaces for a smaller pad is the quotient of spaces needed to fill the group to meet
+maxWidth, and words-to-pad. This might be all the pads we need. If there is any remainder in spaces,
+the bigger spaces will take care of it.
+So with a width of 10, and 4 words, with 5 characters, we end up with 5 spaces left.
+&#x2026;&#x2026;&#x2026;.
+ay..e..i.o
+5 spaces / 3 words (quotient) is 1, the lesser pad length</li>
+<li>Create the lesser space pad string for use later.</li>
+<li>The bigger space length will be the ceiling of the ratio between remaining spaces and words to pad.
+Now that I think of it, I&rsquo;m pretty sure this will always be one space larger and
+can just be (add1 lspace-len) but I don&rsquo;t feel like running
+it through all the tests again on LeetCode. An exercise for the reader, perhaps?</li>
+<li>Create the bigger pad for later use.</li>
+<li>To figure out the number of big pads, see how many spaces are left after applying all lesser pads.
+The number of spaces left means we can replace that many number of lesser pads with big pads to fill
+up the group. Note that there might not be any big pads.</li>
+<li>Since we will apply all big pads first, split the group in two:
+<ul class="org-ul">
+<li>The first word, and then `btimes` amount of words (might be none)</li>
+<li>The rest of the words.</li>
+</ul></li>
+<li>Join the first group together with big pads. If it&rsquo;s just the first word, no big pads are added.</li>
+<li>If there are &ldquo;lesser&rdquo; words, join them together with lesser pads, and add a lesser pad to the front.</li>
+<li>Combine these two strings. The group has been padded.</li>
+</ol>
+</div>
+</div>
+</div>
+<div id="outline-container-org84cc6a4" class="outline-2">
+<h2 id="org84cc6a4">More on `&#x2026;`</h2>
+<div class="outline-text-2" id="text-org84cc6a4">
+<p>
+The price of convenience in this case is an inefficient program.
+The match library achieves the greediness with the when clause in this pattern
+</p>
+<div class="org-src-container">
+<pre class="src src-racket">[(list a ..1 b ...)
+ <span style="color: #ffd700;">#:when</span> (&lt;= (+ (sub1 (length a)) (foldl + 0 (<span style="color: #6ca6cd; font-weight: bold;">map</span> string-length a))) maxWidth)
+</pre>
+</div>
+<p>
+by first reversing the words, checking that list against the &ldquo;when&rdquo; condition, and if it fails,
+will take the tail (cdr), and try again, and keep doing this until a group of words matches. As you can
+see this is repeating work. But, it gets the job done, and saves a lot of developer time, and
+leads to an easy to understand solution (I think so anyway).
+</p>
+</div>
+</div>
+<div id="outline-container-orgede338a" class="outline-2">
+<h2 id="orgede338a">Conclusion</h2>
+<div class="outline-text-2" id="text-orgede338a">
+<p>
+Racket is a good language. It has the elegance of Scheme, a good standard library and great documentation.
+I have been enjoying solving LeetCode problems with it.
+</p>
+
+<p>
+Unfortunately on LeetCode, no matter what, submissions will use 100 MB memory and take at least 200 m/s.
+That looks horrible next to the C solutions, reported as 0 m/s runtime and 5 MB memory usage.
+There appears to be some pre-allocating of memory, and JIT compilation added into the runtime for Racket.
+And I noticed that debugging with DrRacket on my machine used 500 mb of memory!
+</p>
+</div>
+</div>
+</div>
+</body>
+</html>

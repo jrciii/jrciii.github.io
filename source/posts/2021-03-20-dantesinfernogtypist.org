@@ -1,0 +1,81 @@
+#+TITLE: GNU Typist and Project Gutenberg- Practice typing with classic literature
+#+DATE: 2021-03-20
+
+* I've recently gotten into mechanical keyboards and typing.
+I feel like this should have happened before. I've put in an enormous
+amount of time behind keyboards. But I've never experienced the simple
+joys of tactile mechanical switches and RGB backlit keys pulsing in a
+pleasing pattern. I could touch type using my own style but I wasn't
+particularly fast. Now within a week of practicing using [[https://www.gnu.org/software/gtypist/][GNU Typist]] on
+a [[https://hhkeyboard.us/happyhacking/pro-classic/][Happy Hacking Keyboard]] and a [[https://www.pcgamingrace.com/products/the-glorious-gmmk-tkl-pre-built-white][Glorious PC Gaming Race GMMK Tenkeyless
+White Ice Edition]], I regularly get up to 70 wpm and average around 50,
+with proper form. It feels good being "adequate." I hope to crack 100
+someday.
+
+* But now I'm running out of GNU Typist drills!
+Some of the lessons in gtypist are a real hoot. I've been copying
+old-timey correspondence about purchasing ancient computers and floppy
+disks, and even one about happening upon an old man who has been
+beaten possibly to death. And once you get hooked to these stories,
+it's all over! So I had an idea. I would take classic literature from
+[[http://gutenberg.org][Project Gutenberg]] and convert them into gtypist lessons so that I can
+both read and practice typing at the same time.
+
+* How to convert a book into typing drills
+** Download the book (The Divine Comedy in this case)
+#+BEGIN_SRC shell
+wget https://www.gutenberg.org/cache/epub/1001/pg1001.txt -O divinecomedy.txt
+# Clean up any weird characters
+dos2unix divinecomedy.txt
+#+END_SRC
+
+#+RESULTS:
+** Trim the headers and footers
+Don't have anything special for this. I edited in emacs to trim down
+past the table of contents and remove the footer.
+** Make a .ktouch file with each paragraph a lesson
+Here's some python code to split the paragraphs into lessons.
+It's looking for blank lines and inserting the paragraph number as the
+lesson name so you can bookmark your progress easily.
+#+BEGIN_SRC python :exports both
+f = open("divinecomedy.txt", "r")
+o = open("divinecomedy.ktouch", "w")
+i = 0
+o.write("Paragraph " + str(i) + "\n")
+for line in f:
+  if line == "\n":
+    i = i + 1
+    o.write("\n")
+    o.write("Paragraph " + str(i) + "\n")
+  else:
+    o.write(line)
+
+# Sample output
+return open("divinecomedy.ktouch","r").readlines()[0:8]
+#+END_SRC
+
+#+RESULTS:
+| Paragraph 0\n | Inferno: Canto I\n | \n | Paragraph 1\n | Midway upon the journey of our life\n | I found myself within a forest dark,\n | For the straightforward pathway had been lost.\n | \n |
+
+** Convert the ktouch lesson to a gtypist lesson
+To do this you'll need the tools that come with gtypist.
+[[https://ftp.gnu.org/gnu/gtypist/gtypist-2.9.5.tar.xz][I downloaded this file to get them.]]
+#+BEGIN_SRC shell
+perl -I ~/gtypist-2.9.5/tools ~/gtypist-2.9.5/tools/ktouchOLD2typ.pl divinecomedy.ktouch
+#+END_SRC
+
+#+RESULTS:
+: Converting divinecomedy.ktouch to divinecomedy.typ...
+
+** Run with gtypist
+Install gtypist and run:
+#+BEGIN_SRC shell
+gtypist divinecomedy.typ
+#+END_SRC
+
+* Enjoy!
+If you used the divine comedy, you now have 1728 paragraphs of divine
+comedy to type and read through.
+
+Here's one of my attempts (above 60 wpm, not bad) on the first paragraph:
+[[https://jrciii.com/images/divinetypist.png]]

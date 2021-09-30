@@ -1,0 +1,9 @@
+#+TITLE: Posts
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="luxury.css">
+- [[file:posts/2021-09-24-leetcodetextjustify.org][A Racket Solution For LeetCode Problem #68 Text Justification]]^{ (2021-09-26, updated )}
+- [[file:posts/2021-03-23-downloadbible.org][Downloading the New Revised Standard Version Catholic Edition Bible]]^{ (2021-09-26, updated )}
+- [[file:posts/2021-03-20-dantesinfernogtypist.org][GNU Typist and Project Gutenberg- Practice typing with classic literature]]^{ (2021-09-26, updated )}
+- [[file:posts/2021-03-16-dreamprogress.org][Dream Progress (I had a lucid dream!)]]^{ (2021-09-26, updated )}
+- [[file:posts/2021-03-14-orglinktohtml.org][Hakyll - Converting file links to .html links when compiling]]^{ (2021-09-26, updated )}
+- [[file:posts/2021-03-14-makingjrciiicom.org][Making This Site]]^{ (2021-09-26, updated )}
+- [[file:posts/2021-03-13-firstpost.org][First Post]]^{ (2021-09-26, updated )}

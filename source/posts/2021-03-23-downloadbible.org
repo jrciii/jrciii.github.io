@@ -1,0 +1,74 @@
+#+TITLE: Downloading the New Revised Standard Version Catholic Edition Bible
+#+DATE: 2021-03-23
+
+If you want a text file of a United States Conference of Catholic
+Bishops [[https://www.usccb.org/offices/new-american-bible/approved-translations-bible][approved translation of the bible]], you're going to need to
+scrape a website that allows you to read one. This is a bit of a
+copyright gray-area, so make sure you are using this for research
+purposes and not distributing copies.
+
+Note that the steps in this post are for creating a monolithic version
+without navigation, intended to be read from beginning to end. Maybe
+even in one sitting if you're feeling up to it! Feel free to copy and
+modify this code to fit your formatting needs.
+
+* Download the HTML files
+I used [[https://biblegateway.com]]. This step gets all the passage URLs
+(1328 of them in this edition) and then downloads them.
+#+BEGIN_SRC shell
+wget https://www.biblegateway.com/versions/New-Revised-Standard-Version-Catholic-Edition-NRSVCE-Bible/#booklist -O booklist
+# Replace -P 4 with however many cores you want to use.
+# Or remove for single-threade mode
+grep -Po "(/passage/.*?NRSVCE)" ../gatewaylist | sed 's/amp;//g' | awk '{print "\"wget '\''https://biblegateway.com" $1 "'\'' -O " NR ".html\""}' | xargs -n 1 -P 4 -I @ sh -c "@"
+#+END_SRC
+
+* Extract the relevant section
+I'm using Python and [[https://www.crummy.com/software/BeautifulSoup/][BeautifulSoup]] for this.
+** Create a script that reads HTML and keeps only the passage title and section.
+#+BEGIN_SRC python
+from bs4 import BeautifulSoup
+from sys import argv
+
+with open(argv[1]) as f:
+    soup = BeautifulSoup(f, 'html.parser')
+    print('<b>' + soup.body.find('div', attrs={'class':'dropdown-display-text'}).text + '</b>')
+    print(soup.body.find('div', attrs={'class':'version-NRSVCE result-text-style-normal text-html'}).decode_contents())
+    print("")
+#+END_SRC
+
+* Create the monolith
+** Run the script on all files and concatenate
+#+BEGIN_SRC shell
+# Don't use -P on xargs here, it will be out of order
+ls | grep html | sort -n | xargs -n 1 -I @ python ../gateway_extract.py @ > ~/nrsvce_bible.html
+#+END_SRC
+
+** Optionally clean up some characters
+I intend to use speed-type on passages, so I am removing some characters like smart quotes and long dashes.
+#+BEGIN_SRC shell
+sed -i'.bk' s/[”“]/'"'/g nrsvce_bible.html 
+sed -i'.bk' s/[—]/'--'/g nrsvce_bible.html
+#+END_SRC
+
+* Enjoy!
+Here's an image of the result (blurred to avoid copyright issues)
+[[https://jrciii.com/images/blurred_bible.png]]
+
+I intend to speed read and practice speed typing using the
+*spray-mode* and *speed-type* Emacs packages, respectively. I loaded
+the file with *eww-open-file*, and saved a plain text version with no
+links to the footnotes. I couldn't figure out how to keep a bookmark
+of my current cursor position in a rendered html buffer using the
+built-in bookmark functionality (or with bookmark+).
+
+** Relevant bookmark shortcuts
+- C-x r m (reMember bookmark)
+- C-x r l (List bookmarks)
+- C-x r b (jump to Bookmark)
+
+** Useful navigation shortcuts
+- C-SPC - set mark
+- M-} - move to end of next paragraph
+- M-{ - move to beginning of previous paragraph
+- M-x speed-type-region - Enter speed-type mode for region (use previous shortcuts to select paragraphs)
+- M-x spray-mode - Enter speed reading mode

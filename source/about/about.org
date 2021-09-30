@@ -1,0 +1,14 @@
+#+TITLE: About Me
+#+SETUPFILE: setup.org
+* Facts
+:PROPERTIES:
+:UNNUMBERED: t
+:END:
+
+- Loves his family
+- Pronouns: he/him
+- Writes code
+- Integrates technologies
+- Throws boomerangs
+- Training for triathlons
+
